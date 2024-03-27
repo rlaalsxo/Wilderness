@@ -15,6 +15,7 @@ public class Player : MonoBehaviour
     public CharacterController Controller { get; private set; }
 
     private PlayerStateMachine stateMachine;
+    public ForceReceiver ForceReceiver { get; private set; }
 
     private void Awake()
     {
@@ -24,6 +25,8 @@ public class Player : MonoBehaviour
         Animator = GetComponentInChildren<Animator>();
         Input = GetComponent<PlayerInput>();
         Controller = GetComponent<CharacterController>();
+        ForceReceiver = GetComponent<ForceReceiver>();
+
         stateMachine = new PlayerStateMachine(this);
     }
 

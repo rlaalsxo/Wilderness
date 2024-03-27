@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerBaseState : IState
 {
@@ -39,12 +41,54 @@ public class PlayerBaseState : IState
         Move();
     }
 
-
+    protected void ForceMove()
+    {
+        stateMachine.Player.Controller.Move(stateMachine.Player.ForceReceiver.Movement * Time.deltaTime);
+    }
     protected virtual void AddInputActionsCallBacks()
     {
+        PlayerInput input = stateMachine.Player.Input;
+        input.PlayerActions.Movement.canceled += OnMovementCanceled;
+        input.PlayerActions.Run.started += OnRunStarted;
 
+        stateMachine.Player.Input.PlayerActions.Jump.started += OnJumpStarted;
+
+        stateMachine.Player.Input.PlayerActions.Attack.performed += OnAttackPerformed;
+        stateMachine.Player.Input.PlayerActions.Attack.canceled += OnAttackCanceled;
     }
+
+    
+
     protected virtual void RemoveInputActionsCallBacks()
+    {
+        PlayerInput input = stateMachine.Player.Input;
+        input.PlayerActions.Movement.canceled -= OnMovementCanceled;
+        input.PlayerActions.Run.started -= OnRunStarted;
+
+        stateMachine.Player.Input.PlayerActions.Jump.started -= OnJumpStarted;
+
+        stateMachine.Player.Input.PlayerActions.Attack.performed -= OnAttackPerformed;
+        stateMachine.Player.Input.PlayerActions.Attack.canceled -= OnAttackCanceled;
+    }
+    protected virtual void OnAttackPerformed(InputAction.CallbackContext obj)
+    {
+        stateMachine.IsAttacking = true;
+    }
+
+    protected virtual void OnAttackCanceled(InputAction.CallbackContext obj)
+    {
+        stateMachine.IsAttacking = false;
+    }
+    protected virtual void OnMovementCanceled(InputAction.CallbackContext context)
+    {
+        
+    }
+
+    protected virtual void OnRunStarted(InputAction.CallbackContext context)
+    {
+        
+    }
+    protected virtual void OnJumpStarted(InputAction.CallbackContext context)
     {
 
     }
@@ -81,7 +125,9 @@ public class PlayerBaseState : IState
     {
         float movementSpeed = GetMovemenetSpeed();
         stateMachine.Player.Controller.Move(
-            (movementDirection * movementSpeed) * Time.deltaTime
+            ((movementDirection * movementSpeed) 
+            + stateMachine.Player.ForceReceiver.Movement) 
+            * Time.deltaTime
             );
     }
     private void Rotate(Vector3 movementDirection)
@@ -109,5 +155,22 @@ public class PlayerBaseState : IState
     {
         stateMachine.Player.Animator.SetBool(animationHash, false);
     }
+    protected float GetNormalizedTime(Animator animator, string tag)
+    {
+        AnimatorStateInfo currentInfo = animator.GetCurrentAnimatorStateInfo(0);
+        AnimatorStateInfo nextInfo = animator.GetNextAnimatorStateInfo(0);
 
+        if (animator.IsInTransition(0) && nextInfo.IsTag(tag))
+        {
+            return nextInfo.normalizedTime;
+        }
+        else if (!animator.IsInTransition(0) && currentInfo.IsTag(tag))
+        {
+            return currentInfo.normalizedTime;
+        }
+        else
+        {
+            return 0f;
+        }
+    }
 }

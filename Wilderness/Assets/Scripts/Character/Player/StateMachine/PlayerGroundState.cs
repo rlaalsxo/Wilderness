@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerGroundState : PlayerBaseState
 {
@@ -20,10 +21,39 @@ public class PlayerGroundState : PlayerBaseState
     public override void Update()
     {
         base.Update();
+
+        if (stateMachine.IsAttacking)
+        {
+            OnAttack();
+            return;
+        }
     }
     public override void PhysicsUpdate()
     {
         base.PhysicsUpdate();
     }
+    protected override void OnMovementCanceled(InputAction.CallbackContext context)
+    {
+        if(stateMachine.MovementInput == Vector2.zero)
+        {
+            return;
+        }
 
+        stateMachine.ChangeState(stateMachine.IdleState);
+
+        base.OnMovementCanceled(context);
+    }
+    protected override void OnJumpStarted(InputAction.CallbackContext context)
+    {
+        stateMachine.ChangeState(stateMachine.JumpState);
+    }
+
+    protected virtual void OnMove()
+    {
+        stateMachine.ChangeState(stateMachine.WalkState);
+    }
+    protected virtual void OnAttack()
+    {
+        stateMachine.ChangeState(stateMachine.ComboAttackState);
+    }
 }
