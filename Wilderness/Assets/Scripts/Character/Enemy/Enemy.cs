@@ -14,6 +14,8 @@ public class Enemy : MonoBehaviour
     public Animator Animator { get; private set; }
     public ForceReceiver ForceReceiver { get; private set; }
     public CharacterController Controller { get; private set; }
+    [field: SerializeField] public Weapon Weapon { get; private set; }
+    public Health Health { get; private set; }
 
     private EnemyStateMachine stateMachine;
 
@@ -25,6 +27,7 @@ public class Enemy : MonoBehaviour
         Animator = GetComponentInChildren<Animator>();
         Controller = GetComponent<CharacterController>();
         ForceReceiver = GetComponent<ForceReceiver>();
+        Health = GetComponent<Health>();
 
         stateMachine = new EnemyStateMachine(this);
     }
@@ -32,6 +35,7 @@ public class Enemy : MonoBehaviour
     private void Start()
     {
         stateMachine.ChangeState(stateMachine.IdleState);
+        Health.OnDie += OnDie;
     }
 
     private void Update()
@@ -44,5 +48,10 @@ public class Enemy : MonoBehaviour
     private void FixedUpdate()
     {
         stateMachine.PhysicsUpdate();
+    }
+    void OnDie()
+    {
+        Animator.SetTrigger("Die");
+        enabled = false;
     }
 }
